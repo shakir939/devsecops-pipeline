@@ -1,0 +1,46 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.11
+    commands:
+      - echo Installing security tools...
+      - pip install bandit safety
+
+  pre_build:
+    commands:
+      - echo Running security scans...
+      
+      # SAST - Static Application Security Testing
+      - echo Running Bandit SAST scan...
+      - bandit -r . -f json -o bandit-results.json || true
+      - bandit -r . --severity-level medium
+      
+      # Dependency vulnerability scan
+      - echo Running Safety dependency scan...
+      - safety check -r requirements.txt
+      
+      # Secrets scan
+      - echo Scanning for hardcoded secrets...
+      - grep -r "password\|secret\|api_key\|aws_access" . --include="*.py" --include="*.txt" --include="*.env" -i && echo "WARNING: Potential secrets found" || echo "No secrets detected"
+
+  build:
+    commands:
+      - echo Build started...
+      - echo Security scans passed. Proceeding with deployment.
+
+  post_build:
+    commands:
+      - echo Build completed successfully
+
+artifacts:
+  files:
+    - '**/*'
+  discard-paths: no
+
+reports:
+  bandit-report:
+    files:
+      - bandit-results.json
+    file-format: CUCUMBERJSON
