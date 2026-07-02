@@ -8,22 +8,16 @@ phases:
       - echo Installing security tools...
       - pip install bandit safety
 
-  pre_build:
+pre_build:
     commands:
       - echo Running security scans...
-      
-      # SAST - Static Application Security Testing
       - echo Running Bandit SAST scan...
       - bandit -r . -f json -o bandit-results.json || true
       - bandit -r . --severity-level medium
-      
-      # Dependency vulnerability scan
       - echo Running Safety dependency scan...
       - safety check -r requirements.txt
-      
-      # Secrets scan
       - echo Scanning for hardcoded secrets...
-      - grep -r "password\|secret\|api_key\|aws_access" . --include="*.py" --include="*.txt" --include="*.env" -i && echo "WARNING: Potential secrets found" || echo "No secrets detected"
+      - grep -r "password\|secret\|api_key\|aws_access" . --include="*.py" --include="*.txt" --include="*.env" -i && echo "WARNING potential secrets found" || echo "No secrets detected"
 
   build:
     commands:
